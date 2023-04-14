@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lottery</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .number-generator {
+            text-align: center;
+        }
+
+        .number-display {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 24px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lottery</h1>
+        <div class="number-generator">
+            <button class="button" onclick="generateNumber()">Generate Number</button>
+        </div>
+        <div class="number-display">
+            <p id="generatedNumber"></p>
+            <p id="error"></p>
+        </div>
+    </div>
+    <script>
+        async function generateNumber() {
+            // Check if Web3 is available
+            if (typeof web3 === 'undefined') {
+                document.getElementById('error').innerHTML = 'Web3 not found. Please install MetaMask or use a compatible browser.';
+                return;
+            }
+
+            // Check if MetaMask is connected
+            if (!web3.currentProvider.isConnected()) {
+                document.getElementById('error').innerHTML = 'MetaMask not connected. Please connect MetaMask to your Ethereum network.';
+                return;
+            }
+
+            // Get user's Ethereum address
+            const accounts = await web3.eth.requestAccounts();
+            const userAddress = accounts[0];
+
+            // Call the generateNumber() function in the smart contract
+            const lotteryContract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+            lotteryContract.methods.generateNumber().send({from: userAddress})
+                .on('transactionHash', function(hash){
+                    // Transaction sent, show a loading spinner or progress indicator
+                    document.getElementById('generatedNumber').innerHTML = 'Generating number...';
+                })
+                .on('receipt', function(receipt){
+                    // Transaction receipt received, update the UI with the generated number
+                    const generatedNumber = receipt.events.NumberGenerated.returnValues.number;
+                    document.getElementById('generatedNumber').innerHTML = 'Generated Number: ' + generatedNumber;
+                })
+                .on('error', function(error){
+                    // Transaction failed, show an error message
+                    document.getElementById('error').innerHTML = 'Error: ' + error.message;
+                });
+        }
+    </script>
+</body>
+</html>
