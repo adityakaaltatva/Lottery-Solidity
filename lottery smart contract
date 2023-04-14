@@ -1,0 +1,26 @@
+pragma solidity ^0.8.0;
+
+contract Lottery {
+    mapping(address => uint256) public userNumbers;
+    mapping(uint256 => bool) public usedNumbers;
+    uint256 public lastNumber;
+    
+    event NumberGenerated(address indexed user, uint256 number);
+
+    constructor() {
+        lastNumber = 0;
+    }
+
+    function generateNumber() public {
+        require(userNumbers[msg.sender] == 0, "You have already generated a number.");
+        lastNumber += 1;
+        require(!usedNumbers[lastNumber], "Number already used.");
+        usedNumbers[lastNumber] = true;
+        userNumbers[msg.sender] = lastNumber;
+        emit NumberGenerated(msg.sender, lastNumber);
+    }
+
+    function getUserNumber(address user) public view returns (uint256) {
+        return userNumbers[user];
+    }
+}
